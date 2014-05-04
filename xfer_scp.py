@@ -48,7 +48,7 @@ SCRIPT_DESC = "Send files via scp after xfer completes, optionally delete after"
 #####
 patterns = {}
 configurations = {
-#        "delete_after_send" : "false", # not yet implemented
+        "delete_after_send" : "false",
         "remote_host" : "",
         "remote_user" : "",
         "local_identity_key" : "",
@@ -61,17 +61,26 @@ configurations = {
 def xfer_scp_process_cb(data, command, rc, out, err):
     if rc == 0:
         # process has terminated successfully
-        weechat.prnt('', "xfer_scp: File sent via SCP successfully")
+        weechat.prnt('', "xfer_scp: File " + data + " sent via SCP successfully")
+        if configurations['delete_after_send'].lower() == "true":
+            del_file(data)
         return weechat.WEECHAT_RC_OK
 
     elif rc > 0:
         # process terminated unsuccesfully
-        weechat.prnt('', "xfer_scp: File did not send successfully")
+        weechat.prnt('', "xfer_scp: File " + data + " did not send successfully")
         return weechat.WEECHAT_RC_ERROR
 
     else:
         return weechat.WEECHAT_RC_OK
 
+def xfer_del_process_cb(data, command, rc, out, err):
+    if rc == 0:
+        weechat.prnt('', "xfer_scp: File " + data + " deleted.")
+        return weechat.WEECHAT_RC_OK
+    else:
+        weechat.prnt('', "xfer_scp: Error deleting file " + data + ". Msg: " + err)
+        return weechat.WEECHAT_RC_ERROR
 
 def scp_file(filename, remote_dir):
     command_string = "scp -q"
@@ -86,9 +95,11 @@ def scp_file(filename, remote_dir):
     command_string += ":"
     command_string += remote_dir
 
-    print command_string
+    weechat.hook_process(command_string, 0, 'xfer_scp_process_cb', filename)
 
-    weechat.hook_process(command_string, 0, 'xfer_scp_process_cb', '')
+def del_file(filename):
+    command_string = "rm " + filename
+    weechat.hook_process(command_string, 0, 'xfer_del_process_cb', filename)
 
 def refresh_configurations():
     global configurations
@@ -171,10 +182,8 @@ def xfer_ended_signal_cb(data, signal, signal_data):
 def config_changed_cb(data, option, value):
     if option is "plugins.var.python.xfer_scp.patternlist":
         refresh_patterns()
-    elif option in configurations:
-        configurations[option] = value
     else:
-        return weechat.WEECHAT_RC_ERROR
+        refresh_configurations()
 
     return weechat.WEECHAT_RC_OK
 

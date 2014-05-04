@@ -33,3 +33,4 @@ Roadmap
     * Find a better way to persist pattern sets
     * Default operation for non-matching files
     * Command completion
+    * Buffer showing scp progress
