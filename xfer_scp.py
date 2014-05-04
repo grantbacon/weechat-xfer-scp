@@ -17,10 +17,10 @@ Commands:
     * /scp del <rule_number>
         Remove an existing rule
 
-Version: 1.0.0
+Version: 1.0.1
 Author: Grant Bacon <btnarg@gmail.com>
 License: GPL3
-Date: 24 February 2014
+Date: 05 May 2014
 """
 
 import_ok = True
@@ -28,8 +28,6 @@ import_ok = True
 try:
     import weechat
     import re
-    from subprocess import Popen, PIPE
-    from time import sleep
 except:
     print("You must run this script within Weechat!")
     print("http://www.weechat.org")
@@ -40,7 +38,7 @@ except:
 #####
 SCRIPT_NAME = "xfer_scp"
 SCRIPT_AUTHOR = "Grant Bacon <btnarg@gmail.com>"
-SCRIPT_VERSION = "0.0.1"
+SCRIPT_VERSION = "1.0.1"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "Send files via scp after xfer completes, optionally delete after"
 
@@ -60,9 +58,23 @@ configurations = {
         "patternlist" : ""
 }
 
+def xfer_scp_process_cb(data, command, rc, out, err):
+    if rc == 0:
+        # process has terminated successfully
+        weechat.prnt('', "xfer_scp: File sent via SCP successfully")
+        return weechat.WEECHAT_RC_OK
+
+    elif rc > 0:
+        # process terminated unsuccesfully
+        weechat.prnt('', "xfer_scp: File did not send successfully")
+        return weechat.WEECHAT_RC_ERROR
+
+    else:
+        return weechat.WEECHAT_RC_OK
+
 
 def scp_file(filename, remote_dir):
-    command_string = "scp"
+    command_string = "scp -q"
     if configurations['local_identity_key'] != "":
         command_string += " -i " + configurations['local_identity_key']
     if configurations['remote_port'] != "":
@@ -74,19 +86,22 @@ def scp_file(filename, remote_dir):
     command_string += ":"
     command_string += remote_dir
 
-    # using shell=True is dangerous
-    # other scripts could set your configurations for this script and execute arbitrary commands
-    # so... be aware of that, but I don't really install untrusted scripts
-    process = Popen(command_string, shell=True, stdin=PIPE, stdout=PIPE)
+    print command_string
 
+    weechat.hook_process(command_string, 0, 'xfer_scp_process_cb', '')
+
+def refresh_configurations():
+    global configurations
+    for key in configurations.keys():
+        configurations[key] = weechat.config_get_plugin(key)
 
 def refresh_patterns():
     global patterns
-    if len(patterns) is 0:
-        patterns = {}
-    else:
-        patlist = weechat.config_get_plugin('patternlist')
+    patlist = weechat.config_get_plugin('patternlist')
+    if patlist != "":
         patterns = dict(item.split('|') for item in patlist.split('||'))
+    else:
+        patterns = {}
 
 
 ####
@@ -182,4 +197,4 @@ if __name__ == "__main__" and import_ok:
         weechat.hook_signal('xfer_ended', 'xfer_ended_signal_cb', '')
         weechat.hook_config("plugins.var.python." + SCRIPT_NAME + ".*", "config_changed_cb", "")
         refresh_patterns()
-
+        refresh_configurations()
