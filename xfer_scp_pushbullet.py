@@ -13,7 +13,7 @@ Commands:
 Requires:
     * pushbullet.py (pip install pushbullet.py)
 
-Version: 0.0.1
+Version: 0.0.2
 Author: Grant Bacon <btnarg@gmail.com>
 License: GPL3
 Date: 01 Oct 2015
@@ -24,7 +24,6 @@ import_ok = True
 try:
     import weechat
     from pushbullet import Pushbullet
-    import re
 except:
     print("You must run this script within Weechat!")
     print("http://www.weechat.org")
@@ -35,7 +34,7 @@ except:
 #####
 SCRIPT_NAME = "xfer_scp_pushbullet"
 SCRIPT_AUTHOR = "Grant Bacon <btnarg@gmail.com>"
-SCRIPT_VERSION = "0.0.1"
+SCRIPT_VERSION = "0.0.2"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "Notify a pushbullet channel of a successful send from xfer_scp"
 
