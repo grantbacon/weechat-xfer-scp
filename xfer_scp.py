@@ -17,10 +17,10 @@ Commands:
     * /scp del <rule_number>
         Remove an existing rule
 
-Version: 1.0.1
+Version: 1.0.2
 Author: Grant Bacon <btnarg@gmail.com>
 License: GPL3
-Date: 05 May 2014
+Date: 01 Oct 2015
 """
 
 import_ok = True
@@ -64,11 +64,15 @@ def xfer_scp_process_cb(data, command, rc, out, err):
         weechat.prnt('', "xfer_scp: File " + data + " sent via SCP successfully")
         if configurations['delete_after_send'].lower() == "true":
             del_file(data)
+
+        weechat.hook_signal_send("xfer_scp_success", weechat.WEECHAT_HOOK_SIGNAL_STRING, data.rsplit("/", 1).pop())
         return weechat.WEECHAT_RC_OK
 
     elif rc > 0:
         # process terminated unsuccesfully
         weechat.prnt('', "xfer_scp: File " + data + " did not send successfully")
+
+        weechat.hook_signal_send("xfer_scp_failure", weechat.WEECHAT_HOOK_SIGNAL_STRING, data.rsplit("/", 1).pop())
         return weechat.WEECHAT_RC_ERROR
 
     else:
