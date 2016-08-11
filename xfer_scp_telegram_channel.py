@@ -23,7 +23,7 @@ import_ok = True
 
 try:
     import weechat
-    from requests import get
+    from requests import post
     from requests.exceptions import Timeout, ConnectionError, HTTPError, TooManyRedirects, RequestException
     import re
     from urllib import urlencode, quote_plus
@@ -37,7 +37,7 @@ except:
 #####
 SCRIPT_NAME = "xfer_scp_telegram_channel"
 SCRIPT_AUTHOR = "Grant Bacon <btnarg@gmail.com>"
-SCRIPT_VERSION = "0.0.1"
+SCRIPT_VERSION = "0.0.2"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "Notify a telegram channel of a successful send from xfer_scp"
 
@@ -91,10 +91,11 @@ def message_channel(message):
     safe_message = pre(quote_plus(message))
     global bot_url, channel_tag
     url = bot_url + "sendMessage"
-    url += "?" + urlencode({'chat_id': channel_tag, 'text': safe_message, 'parse_mode' : 'html'})
+
+    request_data = {'chat_id': channel_tag, 'text': safe_message, 'parse_mode' : 'html'}
 
     try:
-        get(url)
+        post(url, data=request_data)
     except RequestException as e:
         handle_error(e)
 
